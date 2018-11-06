@@ -1,0 +1,64 @@
+#main {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+	  
+.score-box {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+	  
+.score-box > div {
+	height: 50px;
+	width: 140px;
+	text-align: center;
+	font-size: 22px;
+}
+	  
+.modal {
+	position: absolute;
+	display: none;
+	top: 50%;
+	width: 160px;
+	height: 90px;
+	border: 2px solid;
+	border-radius: 5px;
+	text-align: center;
+}
+	  
+.modal.show {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	background-color: #fff;
+}
+	  
+table {
+  background-color: green;
+  border-collapse: collapse;
+}
+
+.othelloSquare {
+  height: 30px;
+  width: 30px;
+  border: 2px solid;
+}
+
+div.black, div.white {
+  width: 100%;
+  height: 100%;
+}
+
+div.black {
+  background-color: black;
+  border-radius: 50%;
+}
+
+div.white {
+  background-color: white;
+  border-radius: 50%;
+}
