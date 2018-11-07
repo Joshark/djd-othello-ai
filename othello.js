@@ -1,6 +1,7 @@
 const nSquares = 8;
 const divBlack = "<div class='black' />";
 const divWhite = "<div class='white' />";
+const whiteMoved = false;									//This boolean only activates if the AI has found a legal movement
 
 let score = {
   black: 0,
@@ -33,15 +34,21 @@ $(document).on('click', '.othelloSquare', function() {
         pickCoin($(this), divBlack);
         changeCoin($(this), 'black', 'white', divBlack);
 		curPlayer = nextPlayer();
+		
+		//Calls AI (TODO: should be in a different place?) and changes player in case AI has no movement
+		if(!aiPlay()){
+			curPlayer = nextPlayer();
+		}
+		whiteMoved = false;
       }
     } else {
-      if (checkClickedTd($(this))) {
-        pickCoin($(this), divWhite);
-        changeCoin($(this), 'white', 'black', divWhite);
-		curPlayer = nextPlayer();
-      }
+		if (checkClickedTd($(this))) {
+		  pickCoin($(this), divWhite);
+          changeCoin($(this), 'white', 'black', divWhite);
+		  curPlayer = nextPlayer();
+		  whiteMoved = true;
+		}
     }
-
 
     // Verifica possíveis movimentos para o proximo jogador
     if(checkGameState() == 0) {
@@ -100,7 +107,7 @@ const checkGameState = () => {
         for (var dy = -1; dy <= 1; dy++) {
           if(dx === 0 && dy === 0)
             continue;
-
+		
           for(let i=1; i < nSquares; i++) {
             cordXCheck = x + i * (dx),
             cordYCheck = y + i * (dy);
@@ -124,7 +131,7 @@ const checkGameState = () => {
       }
     }
   }
-
+  
   // Sets the current score
   score.black = blackPieces;
   score.white = whitePieces;
@@ -210,6 +217,64 @@ const changeCoin = (clickedId) => {
       }
     }
   }
+}
+
+//AI Test: Choosing the first available square
+const aiPlay = () => {
+	let aiChoices = [];
+	let cordXCheck = 0;
+	let cordYCheck = 0;
+	let cordsXY = '';
+	let opponent = nextPlayer();
+	
+	if(checkGameState() > 0){
+		for(let x = 1; x <= nSquares; x++){
+			for(let y = 1; y <= nSquares; y++){
+			  // Checks all directions for selected square
+			  for (var dx = -1; dx <= 1; dx++) {
+				for (var dy = -1; dy <= 1; dy++) {
+				  if(dx === 0 && dy === 0)
+					continue;
+
+				  for(let i=1; i < nSquares; i++) {  
+					cordXCheck = x + i * (dx),
+					cordYCheck = y + i * (dy);
+
+					if(cordXCheck < 1 || cordXCheck > nSquares || cordYCheck < 1 || cordYCheck > nSquares)
+					  break;
+
+					cordsXY = '#' + cordXCheck + cordYCheck;
+
+					if ($(cordsXY).find('div').hasClass(curPlayer) && i >= 2) {
+					  let pushCords = `#${x}${y}`;
+					  aiChoices.push(pushCords);
+					}
+					
+					if(!($(cordsXY).find('div').hasClass(opponent)))
+					  break;
+				  }
+				}
+			  }
+			}
+		}
+		console.log(aiChoices);
+		//Error: Checks choices for AI
+		for(let i = 0; i < aiChoices.length; i++){
+			$(aiChoices[i]).click();
+			if(whiteMoved){
+				return true;
+			}
+			// //Tried to use this logic to make it so it only "clicks" an empty space (failed)
+			// if (!$(aiChoices[i]).find('div').hasClass(curPlayer) && !$(aiChoices[i]).find('div').hasClass(opponent)){
+				// console.log($(aiChoices[i]).find('div').hasClass(opponent));
+				// pickCoin($(aiChoices[0]), divWhite);
+				// changeCoin($(aiChoices[0]), 'white', 'black', divWhite);
+				// curPlayer = nextPlayer();
+				// return true;
+			// }
+		}
+	}
+	return false;
 }
 
 const startGame = () => {
