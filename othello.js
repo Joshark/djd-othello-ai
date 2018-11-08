@@ -2,12 +2,19 @@ const nSquares = 8;
 const divBlack = "<div class='black' />";
 const divWhite = "<div class='white' />";
 
+let whiteMoved = false;	//This boolean only activates if the AI has found a legal movement
 let score = {
   black: 0,
   white: 0,
 }
+// Try immutability, if possible (Would help AI, too)
+let availableMoves = {
+  black: {},
+  white: {},
+}
 
 let curPlayer = 'black';
+let waitTime;
 
 const loadBoard = () => {
   var table = document.createElement("table");
@@ -30,24 +37,28 @@ $(document).on('click', '.othelloSquare', function() {
   if(!$(this).find('.black')[0] && !$(this).find('.white')[0]) {
     if(curPlayer == 'black') {
       if (checkClickedTd($(this))) {
+        availableMoves[curPlayer] = {};
         pickCoin($(this), divBlack);
         changeCoin($(this), 'black', 'white', divBlack);
-		curPlayer = nextPlayer();
+        curPlayer = nextPlayer();
       }
-    } else {
-      if (checkClickedTd($(this))) {
-        pickCoin($(this), divWhite);
-        changeCoin($(this), 'white', 'black', divWhite);
-		curPlayer = nextPlayer();
-      }
+    } else if (checkClickedTd($(this))) {
+      availableMoves[curPlayer] = {};
+      pickCoin($(this), divWhite);
+      changeCoin($(this), 'white', 'black', divWhite);
+      curPlayer = nextPlayer();
     }
 
 
     // Verifica possíveis movimentos para o proximo jogador
-    if(checkGameState() == 0) {
-      curPlayer = nextPlayer();
+    checkGameState();
 
-      if(checkGameState() == 0) {
+    if(availableMoves[curPlayer].length == 0) {
+      curPlayer = nextPlayer();
+      checkGameState();
+
+      if(availableMoves[curPlayer].length == 0) {
+        clearTimeout(waitTime);
 		    $('.modal').addClass('show')
 
         // Shows modal for which player won or a tie
@@ -61,8 +72,13 @@ $(document).on('click', '.othelloSquare', function() {
       }
     }
 	
-	$('#blackCounter').html(score.black);
-	$('#whiteCounter').html(score.white);
+    $('#blackCounter').html(score.black);
+    $('#whiteCounter').html(score.white);
+
+    //Calls AI (TODO: should be in a different place?) and changes player in case AI has no movement
+    if(curPlayer === 'white') {
+      waitTime = setTimeout(aiPlay, 1000);
+    }
   }
 })
 
@@ -71,7 +87,6 @@ const nextPlayer = () => {
 }
 
 const checkGameState = () => {
-  let possiblePlays = [];
   let opponent = nextPlayer();
   
   let blackPieces = 0;
@@ -80,6 +95,7 @@ const checkGameState = () => {
   let cordXCheck = 0;
   let cordYCheck = 0;
   let cordsXY = '';
+  let pushCords = '';
 
   // Goes through all the squares to check for possible plays
   for(let x=1; x<=nSquares; x++) {
@@ -109,11 +125,15 @@ const checkGameState = () => {
               break;
 
             cordsXY = '#' + cordXCheck + cordYCheck;
-
+            
             if ($(cordsXY).find('div').hasClass(curPlayer) && i >= 2) {
               for(let j=1; j<i; j++) {
-				        let pushCords = `#${-dx + x + (j * dx)}${-dy + y + (j * dy)}`;
-                possiblePlays.push(pushCords);
+                pushCords = `#${x}${y}`;
+
+                if(!availableMoves[curPlayer][pushCords])
+                  availableMoves[curPlayer][pushCords] = 1;
+                else 
+                  availableMoves[curPlayer][pushCords]++;
               }
             }
             
@@ -124,12 +144,10 @@ const checkGameState = () => {
       }
     }
   }
-
+  
   // Sets the current score
   score.black = blackPieces;
   score.white = whitePieces;
-  
-  return possiblePlays.length;
 }
 
 const checkClickedTd = (clickedId) => {
@@ -174,7 +192,6 @@ const pickCoin = (clickedId, curPiece) => {
 }
 
 const changeCoin = (clickedId) => {
-  let coinToChange = [];
   let pushCords = '';
   let opponent = nextPlayer();
   let cordsXY = '';
@@ -210,6 +227,22 @@ const changeCoin = (clickedId) => {
       }
     }
   }
+}
+
+//AI Test: Choosing the first available square
+const aiPlay = () => {
+  let bestMove = 0;
+  let moveToMake = '';
+
+  for(let value in availableMoves[curPlayer]) {
+    if(bestMove < availableMoves[curPlayer][value]) {
+      bestMove = availableMoves[curPlayer][value]
+      moveToMake = value;
+    }
+  }
+  
+  if(bestMove != 0)
+    $(moveToMake).click(); 
 }
 
 const startGame = () => {
