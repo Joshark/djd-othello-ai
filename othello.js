@@ -3,14 +3,17 @@ const divBlack = "<div class='black' />";
 const divWhite = "<div class='white' />";
 
 let whiteMoved = false;	//This boolean only activates if the AI has found a legal movement
-let score = {
-  black: 0,
-  white: 0,
-}
+
 // Try immutability, if possible (Would help AI, too)
-let availableMoves = {
-  black: {},
-  white: {},
+let gameObject = {
+  black: {
+    score: 0,
+    availableMoves: {},
+  },
+  white: {
+    score: 0,
+    availableMoves: {},
+  }, 
 }
 
 let curPlayer = 'black';
@@ -37,13 +40,13 @@ $(document).on('click', '.othelloSquare', function() {
   if(!$(this).find('.black')[0] && !$(this).find('.white')[0]) {
     if(curPlayer == 'black') {
       if (checkClickedTd($(this))) {
-        availableMoves[curPlayer] = {};
+        gameObject.black.availableMoves = {};
         pickCoin($(this), divBlack);
         changeCoin($(this), 'black', 'white', divBlack);
         curPlayer = nextPlayer();
       }
     } else if (checkClickedTd($(this))) {
-      availableMoves[curPlayer] = {};
+      gameObject.white.availableMoves = {};
       pickCoin($(this), divWhite);
       changeCoin($(this), 'white', 'black', divWhite);
       curPlayer = nextPlayer();
@@ -53,18 +56,18 @@ $(document).on('click', '.othelloSquare', function() {
     // Verifica possíveis movimentos para o proximo jogador
     checkGameState();
 
-    if(availableMoves[curPlayer].length == 0) {
+    if(gameObject[curPlayer].availableMoves.length == 0) {
       curPlayer = nextPlayer();
       checkGameState();
 
-      if(availableMoves[curPlayer].length == 0) {
+      if(gameObject[curPlayer].availableMoves.length == 0) {
         clearTimeout(waitTime);
 		    $('.modal').addClass('show')
 
         // Shows modal for which player won or a tie
-        if(score.black < score.white) {
+        if(gameObject.black.score < gameObject.white.score) {
     			$('.modal').html("White won")
-    		} else if(score.white < score.black) {
+    		} else if(gameObject.white.score < gameObject.black.score) {
     			$('.modal').html("Black won")
     		} else {
     			$('.modal').html("Tie")
@@ -72,8 +75,8 @@ $(document).on('click', '.othelloSquare', function() {
       }
     }
 	
-    $('#blackCounter').html(score.black);
-    $('#whiteCounter').html(score.white);
+    $('#blackCounter').html(gameObject.black.score);
+    $('#whiteCounter').html(gameObject.white.score);
 
     //Calls AI (TODO: should be in a different place?) and changes player in case AI has no movement
     if(curPlayer === 'white') {
@@ -84,6 +87,22 @@ $(document).on('click', '.othelloSquare', function() {
 
 const nextPlayer = () => {
   return curPlayer === 'black' ? 'white' : 'black';
+}
+
+//AI Test 2.0: Choosing the square that nets the most points
+const aiPlay = () => {
+  let bestMove = 0;
+  let moveToMake = '';
+
+  for(let value in gameObject[curPlayer].availableMoves) {
+    if(bestMove < gameObject[curPlayer].availableMoves[value]) {
+      bestMove = gameObject[curPlayer].availableMoves[value]
+      moveToMake = value;
+    }
+  }
+  console.log(bestMove, moveToMake)
+  if(bestMove != 0)
+    $(moveToMake).click(); 
 }
 
 const checkGameState = () => {
@@ -130,10 +149,10 @@ const checkGameState = () => {
               for(let j=1; j<i; j++) {
                 pushCords = `#${x}${y}`;
 
-                if(!availableMoves[curPlayer][pushCords])
-                  availableMoves[curPlayer][pushCords] = 1;
+                if(!gameObject[curPlayer].availableMoves[pushCords])
+                  gameObject[curPlayer].availableMoves[pushCords] = 1;
                 else 
-                  availableMoves[curPlayer][pushCords]++;
+                  gameObject[curPlayer].availableMoves[pushCords]++;
               }
             }
             
@@ -144,10 +163,10 @@ const checkGameState = () => {
       }
     }
   }
-  
+
   // Sets the current score
-  score.black = blackPieces;
-  score.white = whitePieces;
+  gameObject.black.score = blackPieces;
+  gameObject.white.score = whitePieces;
 }
 
 const checkClickedTd = (clickedId) => {
@@ -227,22 +246,6 @@ const changeCoin = (clickedId) => {
       }
     }
   }
-}
-
-//AI Test: Choosing the first available square
-const aiPlay = () => {
-  let bestMove = 0;
-  let moveToMake = '';
-
-  for(let value in availableMoves[curPlayer]) {
-    if(bestMove < availableMoves[curPlayer][value]) {
-      bestMove = availableMoves[curPlayer][value]
-      moveToMake = value;
-    }
-  }
-  
-  if(bestMove != 0)
-    $(moveToMake).click(); 
 }
 
 const startGame = () => {
