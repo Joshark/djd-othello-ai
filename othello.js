@@ -52,15 +52,14 @@ $(document).on('click', '.othelloSquare', function() {
       curPlayer = nextPlayer();
     }
 
-
     // Verifica possíveis movimentos para o proximo jogador
     checkGameState();
+	// Object.keys(gameObject[curPlayer].availableMoves).length instead of gameObject[curPlayer].availableMoves.length (second one is undefined)
+	if(Object.keys(gameObject[curPlayer].availableMoves).length == 0) {
+	  curPlayer = nextPlayer();
+	  checkGameState();
 
-    if(gameObject[curPlayer].availableMoves.length == 0) {
-      curPlayer = nextPlayer();
-      checkGameState();
-
-      if(gameObject[curPlayer].availableMoves.length == 0) {
+      if(Object.keys(gameObject[curPlayer].availableMoves).length == 0) {
         clearTimeout(waitTime);
 		    $('.modal').addClass('show')
 
@@ -72,7 +71,11 @@ $(document).on('click', '.othelloSquare', function() {
     		} else {
     			$('.modal').html("Tie")
     		}
-      }
+      } else{
+		$('.modal').addClass('show');
+		$('.modal').html("" + nextPlayer() + " has no moves");
+		waitTime = setTimeout(removeModal, 1000);
+	  }
     }
 	
     $('#blackCounter').html(gameObject.black.score);
@@ -103,6 +106,11 @@ const aiPlay = () => {
   console.log(bestMove, moveToMake)
   if(bestMove != 0)
     $(moveToMake).click(); 
+}
+
+//Makes modal invisible
+const removeModal = () => {
+	$('.modal').removeClass('show');
 }
 
 const checkGameState = () => {
@@ -167,6 +175,7 @@ const checkGameState = () => {
   // Sets the current score
   gameObject.black.score = blackPieces;
   gameObject.white.score = whitePieces;
+  
 }
 
 const checkClickedTd = (clickedId) => {
